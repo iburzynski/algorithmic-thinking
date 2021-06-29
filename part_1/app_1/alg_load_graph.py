@@ -5,8 +5,8 @@ Imports physics citation graph
 """
 
 # general imports
-import urllib2
-
+import requests
+from proj_1 import compute_in_degrees, in_degree_distribution
 # Set timeout for CodeSkulptor if necessary
 #import codeskulptor
 #codeskulptor.set_timeout(20)
@@ -24,12 +24,12 @@ def load_graph(graph_url):
     
     Returns a dictionary that models a graph
     """
-    graph_file = urllib2.urlopen(graph_url)
-    graph_text = graph_file.read()
+    graph_file = requests.get(graph_url)
+    graph_text = graph_file.text
     graph_lines = graph_text.split('\n')
     graph_lines = graph_lines[ : -1]
     
-    print "Loaded graph with", len(graph_lines), "nodes"
+    print("Loaded graph with", len(graph_lines), "nodes")
     
     answer_graph = {}
     for line in graph_lines:
@@ -41,10 +41,10 @@ def load_graph(graph_url):
 
     return answer_graph
 
-#citation_graph = load_graph(CITATION_URL)
-
-
-
-
+# load the citation graph
+citation_graph = load_graph(CITATION_URL)
+# compute the in-degree distribution
+dist = in_degree_distribution(citation_graph)
+print(dist)
 
 
