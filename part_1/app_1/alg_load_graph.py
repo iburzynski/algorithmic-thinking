@@ -41,10 +41,24 @@ def load_graph(graph_url):
 
     return answer_graph
 
+
+def normalize_dist(dist):
+    """
+    Takes an unnormalized distribution and returns a normalized distribution.
+    """
+    # get the number of nodes in the graph
+    num_nodes = sum(dist.values())
+    # create normalized distribution
+    return {degree: count / num_nodes for degree, count in dist.items()}
+
+
 # load the citation graph
 citation_graph = load_graph(CITATION_URL)
 # compute the in-degree distribution
-dist = in_degree_distribution(citation_graph)
-print(dist)
+unnorm_dist = in_degree_distribution(citation_graph)
+# normalize the distribution
+norm_dist = normalize_dist(unnorm_dist)
+
+# print(norm_dist)
 
 
