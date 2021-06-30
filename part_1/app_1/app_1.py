@@ -8,6 +8,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import random
+import math
 # import functions from Project 1
 from proj_1 import compute_in_degrees, in_degree_distribution, make_complete_graph
 # import helper class for efficient version of DPA algorithm (Question 4)
@@ -25,7 +26,6 @@ class Graph():
         """
         self._graph = dict()
         self._num_nodes = 0
-        self._num_edges = 0
 
         return None
     
@@ -142,7 +142,7 @@ class ERGraph(Graph):
 
     def plot_dist(self):
         """
-        Generates the ER distribution chart as a .png file.
+        Generates the ER distribution plot as a .png file.
         """
         file_name = f"er_plot_{self.get_nodes()}"
         title = f"Log/Log Distribution of ER Graph (n={self.get_nodes()}, p={self.get_prob()})"
@@ -150,6 +150,37 @@ class ERGraph(Graph):
 
         return None
 
+###################################
+# Code for Question 4
+
+class DPAGraph(Graph):
+    def __init__(self, num_nodes, num_neighbors):
+        self._num_nodes = num_nodes
+        self._num_neighbors = num_neighbors
+        # make a complete graph with m nodes
+        complete_graph = make_complete_graph(num_neighbors)
+        trial_obj = DPATrial(num_neighbors)
+
+        for node in range(num_neighbors, num_nodes):
+            complete_graph[node] = trial_obj.run_trial(num_neighbors)
+        
+        self._graph = complete_graph
+
+    def get_m(self):
+        """
+        Helper function to retrieve the graph's m value.
+        """
+        return self._num_neighbors
+
+    def plot_dist(self):
+        """
+        Generates the DPA distribution plot as a .png file.
+        """
+        file_name = f"dpa_plot_{self.get_nodes()}"
+        title = f"Log/Log Distribution of DPA Graph (n={self.get_nodes()}, m={self.get_m()})"
+        super().plot_dist(file_name, title)
+
+        return None
 
 ###################################
 # Code for Output
@@ -161,8 +192,22 @@ citation_graph.plot_dist()
 
 # Question 2
 ############
-er_graph_50 = ERGraph(50, .5)
-er_graph_50.plot_dist()
+# Create/plot a small sample graph with ER algorithm
+# er_graph_50 = ERGraph(50, .5)
+# er_graph_50.plot_dist()
 
-er_graph_27000 = ERGraph(27000, .0005)
-er_graph_27000.plot_dist()
+# Calculate appropriate values for n and probability based on the citation graph
+num_nodes = citation_graph.get_nodes()
+num_edges = citation_graph.get_edges()
+num_neighbors = math.ceil(num_edges / num_nodes)
+prob = round(num_neighbors / num_nodes, 4)
+# Create/plot a random graph with ER algorithm comparable to citation graph
+er_graph_full = ERGraph(num_nodes, prob)
+er_graph_full.plot_dist()
+
+# Question 4
+############
+
+# Create/plot a DPA graph with similar n and m values to the citation graph
+# dpa_graph = DPAGraph(num_nodes, num_neighbors)
+# dpa_graph.plot_dist()
