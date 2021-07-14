@@ -7,6 +7,7 @@ import requests
 import random
 import time
 import math
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -17,24 +18,6 @@ from upa_trial import UPATrial
 
 ############################################
 # Provided code
-
-def copy_graph(graph):
-    """
-    Make a copy of a graph
-    """
-    new_graph = {}
-    for node in graph:
-        new_graph[node] = set(graph[node])
-    return new_graph
-
-def delete_node(ugraph, node):
-    """
-    Delete a node from an undirected graph
-    """
-    neighbors = ugraph[node]
-    ugraph.pop(node)
-    for neighbor in neighbors:
-        ugraph[neighbor].remove(node)
     
 def targeted_order(ugraph):
     """
@@ -65,9 +48,6 @@ def targeted_order(ugraph):
 
 NETWORK_URL = "http://storage.googleapis.com/codeskulptor-alg/alg_rf7.txt"
 
-##########################################################
-# Question 1
-##########################################################
 
 def plot_resilience(graphs, targeted=False):
     # Simulate attacks and store resilience lists in dataframe
@@ -83,6 +63,9 @@ def plot_resilience(graphs, targeted=False):
     plt.figure()
     data.plot()
     plt.title(title)
+    axes = plt.gca()
+    axes.spines['top'].set_visible(False)
+    axes.spines['right'].set_visible(False)
     plt.xlabel("Number of Nodes Removed")
     plt.ylabel("Size of Largest Connected Component")
     plt.legend(["Computer Network", f"ER Graph (p={uer_p})", 
@@ -102,7 +85,63 @@ def is_resilient(data, attack_size=0.2, resilience_threshold=0.25):
 
     return answers
 
-# Create example graphs
+def time_test(num_neighbors=5, runs=10):
+    def test_targeted(graph, fast=False):
+        """
+        Runs a single test on a graph using targeted_order. Returns time value.
+        """
+        to_start = time.time()
+        if fast:
+            graph.fast_targeted_order()
+        else:
+            graph.targeted_order()
+        to_end = time.time()
+        to_time = to_end - to_start 
+        return to_time
+    
+    def test_series(graph, fast=False, runs=10):
+        time_list = []
+        for run in range(runs):
+            time_list.append(test_targeted(graph, fast=fast))
+
+        return np.mean(time_list)
+
+    time_test = pd.DataFrame()
+    num_nodes = []
+    to_times = []
+    fto_times = []
+
+    for step in range(10, 1000, 10):
+        num_nodes.append(step)
+        graph = PAGraph(step, num_neighbors, directed=False)
+
+        # Test targeted_order
+        to_times.append(test_series(graph, fast=False, runs=runs))
+        # Test fast_targeted_order
+        fto_times.append(test_series(graph, fast=True, runs=runs))
+
+    time_test["num_nodes"] = num_nodes
+    time_test["targeted_order"] = to_times
+    time_test["fast_targeted_order"] = fto_times
+    time_test.set_index("num_nodes", inplace=True)
+
+    plt.figure()
+    time_test.plot()
+    plt.title("Regular vs. Fast Computation of Targeted Order (Desktop Python)")
+    axes = plt.gca()
+    axes.spines['top'].set_visible(False)
+    axes.spines['right'].set_visible(False)
+    plt.xlabel(f"Size (n) of UPA Graph (m = {num_neighbors})")
+    plt.ylabel("Running Time (Seconds)")
+    plt.savefig(f"targeted_comparison_{runs}.png")
+    
+    return time_test
+
+##########################################################
+# Question 1
+##########################################################
+
+# Create graphs
 graphs = {"network": DataGraph(NETWORK_URL, directed=False)}
 num_nodes = graphs["network"].get_nodes()
 prob = compute_probability(graphs["network"], rounding="ceil")
@@ -113,13 +152,29 @@ graphs["upa"] = PAGraph(num_nodes, num_neighbors, directed=False)
 
 random_df = plot_resilience(graphs, targeted=False)
 
+##########################################################
+# Question 2
+##########################################################
+
 print(is_resilient(random_df))
 
-print(graphs["network"].fast_targeted_order())
-# print(graphs["network"].get_degree(136))    
-# print(graphs["network"].get_graph()[22])
+##########################################################
+# Question 3
+##########################################################
 
+# time_df = time_test(runs=150)
 
+##########################################################
+# Question 4
+##########################################################
+
+targeted_df = plot_resilience(graphs, targeted=True)
+
+##########################################################
+# Question 5
+##########################################################
+
+print(is_resilient(targeted_df))
 
 
 

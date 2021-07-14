@@ -9,6 +9,7 @@ urllib3 = "*"
 requests = "*"
 seaborn = "*"
 pandas = "*"
+numpy = "*"
 
 [dev-packages]
 

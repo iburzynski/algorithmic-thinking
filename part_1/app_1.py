@@ -16,7 +16,7 @@ from dpa_trial import DPATrial
 from upa_trial import UPATrial
 # import functions from Project 2
 from proj_2 import compute_resilience, compute_resilience_bfs
-# from app_2 import targeted_order
+from helpers import copy_graph, delete_node
 
 CITATION_URL = "http://storage.googleapis.com/codeskulptor-alg/alg_phys-cite.txt"
 
@@ -97,25 +97,35 @@ class Graph():
         random.shuffle(attack_list)
         return attack_list
 
+    def targeted_order(self):
+        """
+        Compute a targeted attack order consisting of nodes of maximal degree.
+        Returns a list of nodes.
+        """
+        # copy the graph
+        new_graph = copy_graph(self.get_graph())
+        
+        order = []    
+        while len(new_graph) > 0:
+            max_degree = -1
+            for node in new_graph:
+                if len(new_graph[node]) > max_degree:
+                    max_degree = len(new_graph[node])
+                    max_degree_node = node
+            
+            # neighbors = new_graph[max_degree_node]
+            # new_graph.pop(max_degree_node)
+            # for neighbor in neighbors:
+            #     new_graph[neighbor].remove(max_degree_node)
+
+            delete_node(new_graph, max_degree_node)
+
+            order.append(max_degree_node)
+        return order
+
     def fast_targeted_order(self):
-        def copy_graph(graph):
-            """
-            Make a copy of a graph
-            """
-            new_graph = {}
-            for node in graph:
-                new_graph[node] = set(graph[node])
-            return new_graph
-
-        def delete_node(ugraph, node):
-            """
-            Delete a node from an undirected graph
-            """
-            neighbors = ugraph[node]
-            ugraph.pop(node)
-            for neighbor in neighbors:
-                ugraph[neighbor].remove(node)
-
+        """
+        """
         num_nodes = self.get_nodes()
         degree_sets = {degree: set() for degree in range(num_nodes)}
         graph = copy_graph(self.get_graph())
@@ -130,17 +140,10 @@ class Graph():
                 target = degree_sets[degree].pop()
                 for neighbor in graph[target]:
                     nb_degree = len(graph[neighbor])
-                    if neighbor == 1309:
-                        # print("1309!")
-                        print(f"1309's degree is {nb_degree}")
                     degree_sets[nb_degree].remove(neighbor)
                     degree_sets[nb_degree - 1].add(neighbor)
                 attack_list.append(target)
                 delete_node(graph, target)
-                # delete_queue = graph[target]
-                # graph.pop(target, None)
-                # for item in delete_queue:
-                #     graph[item].remove(target)
         return attack_list
 
     def attack(self, targeted=False, algorithm="uf"):
@@ -265,14 +268,9 @@ class PAGraph(Graph):
             possible_neighbors = self._trial_obj.run_trial(num_neighbors)
             graph[node] = possible_neighbors
             if not directed:
-                # possible_neighbors = list(possible_neighbors)
-                # random.shuffle(possible_neighbors)
-                # graph[node] = set(possible_neighbors[:num_neighbors + 1])
                 # Add reciprocal edges if graph is undirected
                 for neighbor in graph[node]:
                     graph[neighbor].add(node)
-            # else:
-            #     graph[node] = possible_neighbors
         self._graph = graph
 
     def get_m(self):
