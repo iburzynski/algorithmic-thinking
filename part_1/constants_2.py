@@ -1,7 +1,7 @@
 """
-Graphs for Module 2
+Constants for Application #2
 """
-
+# Sample graphs for testing proj_2 functions
 GRAPH0 = {0: set([1]),
           1: set([0, 2]),
           2: set([1, 3]),
@@ -204,7 +204,6 @@ GRAPH8 = {0: set([]),
           48: set([]), 
           49: set([])}
 
-
 GRAPH9 = {0: set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]),
           1: set([0, 3, 4, 7, 8, 9, 10]),
           2: set([0, 5, 6, 11, 12, 13, 14]),
@@ -242,3 +241,6 @@ GRAPH10 = {0: set([1, 2]),
            18: set([16, 19, 20]),
            19: set([18]),
            20: set([18])}
+
+# URL for computer network data
+NETWORK_URL = "http://storage.googleapis.com/codeskulptor-alg/alg_rf7.txt"

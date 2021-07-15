@@ -1,9 +1,66 @@
 """
-Algorithmic Thinking (Part 1): Project #2
+Project functions for Application #2
 """
 from collections import deque
-from proj_2_challenge import DisjSet
-import sample_graphs 
+
+## import sample graphs for testing
+# import constants_2 
+
+# Code for challenge question
+class DisjSet:
+    """
+    Disjoint set class for find-union solution to compute_resilience in 
+    Project #2. 
+    """
+    def __init__(self, ugraph):
+        """
+        Initializes a disjointed set with no edges with nodes from an 
+        undirected graph adjacency list.
+        """
+        self.ranks = {node: 0 for node in ugraph.keys()} # depth of the tree
+        self.parents = {node: node for node in ugraph.keys()}
+        # Create dict to record number of children (used to find largest cc)
+        self.children = {node: 0 for node in ugraph.keys()}
+  
+    def find(self, x):
+        """
+        Takes a node and returns the representative of the set it is an element 
+        of.
+        """
+        if (self.parents[x] != x):
+            
+            # if x is not the parent of itself
+            # Then x is not the representative of
+            # its set,
+            self.parents[x] = self.find(self.parents[x])
+            
+            # so we recursively call Find on its parent
+            # and move i's node directly under the
+            # representative of this set  
+        return self.parents[x] 
+  
+    def union(self, node_x, node_y):
+        """
+        Creates a union of two sets represented by node_x and node_y. 
+        """     
+        # Find current sets of x and y
+        xset = self.find(node_x)
+        yset = self.find(node_y)
+  
+        # Exit method if the nodes are already in the same set.
+        if xset == yset:
+            return
+  
+        # If ranks are different, put the lower ranked item under the higher.
+        if self.ranks[xset] < self.ranks[yset]:
+            self.parents[xset] = yset
+            self.children[yset] += (1 + self.children[xset])
+        else:
+            self.parents[yset] = xset
+            self.children[xset] += (1 + self.children[yset])
+            # If ranks are same, move y under x and increment rank of x's tree.
+            if self.ranks[xset] == self.ranks[yset]:
+                self.ranks[xset] = self.ranks[xset] + 1
 
 # Breadth-first search
 def bfs_visited(ugraph, start_node):
@@ -69,11 +126,11 @@ def largest_cc_size(ugraph):
 # Graph resilience
 def compute_resilience_bfs(ugraph, attack_order):
     """
-    Takes the undirected graph ugraph, a list of nodes attack_order and iterates
-    through the nodes in attack_order. For each node in the list, the function 
-    removes the given node and its edges from the graph and then computes the 
-    size of the largest connected component for the resulting graph. The 
-    function should return a list whose k + 1th entry is the size of the largest
+    Takes an undirected graph and an ordered list of nodes to attack. For each 
+    node in the list, the function removes the node and its edges from the graph 
+    and then computes the size of the largest connected component for the 
+    resulting graph. 
+    Returns a list whose k + 1th entry is the size of the largest
     connected component in the graph after of the removal of the first k nodes 
     in attack_order. The first entry (indexed by zero) is the size of the 
     largest connected component in the original graph. 
@@ -132,6 +189,3 @@ def compute_resilience(ugraph, attack_order):
         cc_sizes.appendleft(get_largest(disj))
         built_nodes.append(node)
     return list(cc_sizes)
-
-# Testing
-# print(compute_resilience(sample_graphs.GRAPH2, [1, 3, 5, 7, 2, 4, 6, 8]))
