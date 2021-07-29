@@ -100,8 +100,8 @@ class Graph():
         Returns a list of nodes.
         """
         # copy the graph
-        new_graph = copy_graph(self.get_graph())        
-        order = []    
+        new_graph = copy_graph(self.get_graph()) # O(n)
+        order = [] # O(1)
         while len(new_graph) > 0:
             max_degree = -1
             for node in new_graph:

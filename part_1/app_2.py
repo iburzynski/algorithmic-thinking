@@ -14,12 +14,14 @@ import math
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.patches import Patch, Rectangle
+import seaborn as sns
 
 ############################################
 # Functions for answering Questions 1 - 5
 ############################################
 
-def plot_resilience(graphs, targeted=False):
+def plot_resilience(graphs, targeted=False, attack_size=0.2):
     # Simulate attacks and store resilience lists in dataframe
     data = pd.DataFrame()
     for graph in graphs:
@@ -36,10 +38,20 @@ def plot_resilience(graphs, targeted=False):
     axes = plt.gca()
     axes.spines['top'].set_visible(False)
     axes.spines['right'].set_visible(False)
+    attack_line, nodes_remaining = attack_size * data.count()[0], (1 - attack_size) * data.count()[0]
+    resilience_threshold = .75 * nodes_remaining
+    plt.axvline(x=attack_line, color="red", alpha=0.2, linestyle=":")
+    plt.axhline(y=resilience_threshold, color="red", alpha=0.2, linestyle=":")
+    resilience_patch = Rectangle((0, 0), attack_line, resilience_threshold, color="red", alpha=0.1, label="Resilience threshold")
+    axes.add_patch(resilience_patch)
+    handles, labels = axes.get_legend_handles_labels()
     plt.xlabel("Number of Nodes Removed")
     plt.ylabel("Size of Largest Connected Component")
-    plt.legend(["Computer Network", f"ER Graph (p={uer_p})", 
-               f"UPA Graph (m={upa_m})"])
+    plt.legend(handles=handles, labels=["Computer Network", f"ER Graph (p={uer_p})", 
+                                        f"UPA Graph (m={upa_m})", "< Resilience threshold"])
+    # plt.legend(["Computer Network", f"ER Graph (p={uer_p})", 
+    #            f"UPA Graph (m={upa_m})"])
+    #plt.legend(handles=[red_patch])
     plt.savefig(f"plots/resilience_{attack_type.lower()}.png")
 
     return data
@@ -136,7 +148,7 @@ print(is_resilient(random_df))
 ##########################################################
 
 # Make time plot of targeted_order vs. fast_targeted order (avg. of 150 runs)
-time_test(runs=150)
+# time_test(runs=150)
 
 ##########################################################
 # Question 4
