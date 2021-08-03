@@ -10,10 +10,137 @@ kmeans_clustering(cluster_list, num_clusters, num_iterations)
 
 where cluster_list is a 2D list of clusters in the plane
 """
-
 import math
-import alg_cluster
 
+class Cluster:
+    """
+    Class for creating and merging clusters of counties.
+    """
+    def __init__(self, fips_codes, horiz_pos, vert_pos, population, risk):
+        """
+        Creates a cluster based on the model of a set of counties' data.
+        """
+        self._fips_codes = fips_codes
+        self._horiz_center = horiz_pos
+        self._vert_center = vert_pos
+        self._total_population = population
+        self._averaged_risk = risk
+        
+    def __repr__(self):
+        """
+        String representation, assuming the module is "clusters".
+        """
+        rep = "clusters.Cluster("
+        rep += str(self._fips_codes) + ", "
+        rep += str(self._horiz_center) + ", "
+        rep += str(self._vert_center) + ", "
+        rep += str(self._total_population) + ", "
+        rep += str(self._averaged_risk) + ")"
+        
+        return rep
+
+    def fips_codes(self):
+        """
+        Gets the cluster's set of FIPS codes.
+        """
+        return self._fips_codes
+    
+    def horiz_center(self):
+        """
+        Gets the averged horizontal center of cluster.
+        """
+        return self._horiz_center
+    
+    def vert_center(self):
+        """
+        Gets the averaged vertical center of the cluster.
+        """
+        return self._vert_center
+    
+    def total_population(self):
+        """
+        Gets the total population for the cluster.
+        """
+        return self._total_population
+    
+    def averaged_risk(self):
+        """
+        Gets the averaged risk for the cluster.
+        """
+        return self._averaged_risk
+           
+    def copy(self):
+        """
+        Returns a copy of a cluster.
+        """
+        copy_cluster = Cluster(set(self._fips_codes), self._horiz_center, 
+                               self._vert_center, self._total_population, 
+                               self._averaged_risk)
+        
+        return copy_cluster
+
+    def distance(self, other_cluster):
+        """
+        Computes the Euclidean distance between two clusters.
+        """
+        vert_dist = self._vert_center - other_cluster.vert_center()
+        horiz_dist = self._horiz_center - other_cluster.horiz_center()
+        return math.sqrt(vert_dist ** 2 + horiz_dist ** 2)
+        
+    def merge_clusters(self, other_cluster):
+        """
+        Merges one cluster into another. The merge uses the relative 
+        populations of each cluster in computing a new center and risk.
+        
+        Note: this method mutates self!
+        """
+        if len(other_cluster.fips_codes()) == 0:
+        
+            return self
+        
+        else:
+            self._fips_codes.update(set(other_cluster.fips_codes()))
+ 
+            # compute weights for averaging
+            self_weight = float(self._total_population)                        
+            other_weight = float(other_cluster.total_population())
+            self._total_population = self._total_population + other_cluster.total_population()
+            self_weight /= self._total_population
+            other_weight /= self._total_population
+                    
+            # update center and risk using weights (refactor if possible)
+            self._vert_center = self_weight * self._vert_center + other_weight * other_cluster.vert_center()
+            self._horiz_center = self_weight * self._horiz_center + other_weight * other_cluster.horiz_center()
+            self._averaged_risk = self_weight * self._averaged_risk + other_weight * other_cluster.averaged_risk()
+        
+            return self
+
+    def cluster_error(self, data_table):
+        """
+        Input: data_table is the original table of cancer data used in creating 
+        the cluster.
+        
+        Output: The error as the sum of the square of the distance from each 
+        county in the cluster to the cluster center (weighted by its population)
+        """
+        # Build hash table to accelerate error computation
+        fips_to_line = {}
+        for line_idx in range(len(data_table)):
+            line = data_table[line_idx]
+            fips_to_line[line[0]] = line_idx
+        
+        # compute error as weighted squared dist from counties to cluster center
+        total_error = 0
+        counties = self.fips_codes()
+        for county in counties:
+            line = data_table[fips_to_line[county]]
+            singleton_cluster = Cluster(set([line[0]]), line[1], line[2], 
+                                        line[3], line[4])
+            singleton_dist = self.distance(singleton_cluster)
+            error = (singleton_dist ** 2) * singleton_cluster.total_population()
+            total_error += error
+        
+        return total_error
 
 ######################################################
 # Code for closest pairs of clusters
@@ -123,13 +250,40 @@ def fast_closest_pair(clusters):
         # return the closest pair from all three subsets
         #py3 return min((min_dist, *points), s_pair)
         return min((min_dist, point1, point2), s_pair) #py2
- 
+
+############################################################
+# Code to create sequential clustering
+# Create alphabetical clusters for county data
+
+def sequential_clustering(singleton_list, num_clusters, **kwargs):
+    """
+    Take a data table and create a list of clusters
+    by partitioning the table into clusters based on its ordering
     
+    Note that method may return num_clusters or num_clusters + 1 final clusters
+    """
+    
+    cluster_list = []
+    cluster_idx = 0
+    total_clusters = len(singleton_list)
+    cluster_size = float(total_clusters)  / num_clusters
+    
+    for cluster_idx in range(len(singleton_list)):
+        new_cluster = singleton_list[cluster_idx]
+        if math.floor(cluster_idx / cluster_size) != \
+           math.floor((cluster_idx - 1) / cluster_size):
+            cluster_list.append(new_cluster)
+        else:
+            cluster_list[-1] = cluster_list[-1].merge_clusters(new_cluster)
+            
+    return cluster_list
+
+
 ######################################################################
 # Code for hierarchical clustering
 
 
-def hierarchical_clustering(clusters, num_clusters):
+def hierarchical_clustering(clusters, num_clusters, **kwargs):
     """
     Compute a hierarchical clustering of a set of clusters
     Note: the function may mutate cluster_list
@@ -150,7 +304,7 @@ def hierarchical_clustering(clusters, num_clusters):
 # Code for k-means clustering
 
     
-def kmeans_clustering(clusters, num_clusters, num_iterations):
+def kmeans_clustering(clusters, num_clusters, num_iterations=5):
     """
     Compute the k-means clustering of a set of clusters
     Note: the function may not mutate cluster_list
@@ -176,7 +330,7 @@ def kmeans_clustering(clusters, num_clusters, num_iterations):
 
     for _dummy_i in range(num_iterations):
         # initialize a set of k (num_clusters) empty clusters
-        new_clusters = [alg_cluster.Cluster(set(), 0, 0, 0, 0) for _cl in range(num_clusters)]
+        new_clusters = [Cluster(set(), 0, 0, 0, 0) for _cl in range(num_clusters)]
         for cls in clusters:
             # compute distances between the current cluster and each center 
             dists = [(cls.distance(cent), ix_f) for ix_f, cent in enumerate(old_clusters)]
@@ -186,8 +340,3 @@ def kmeans_clustering(clusters, num_clusters, num_iterations):
         old_clusters = new_clusters
 
     return new_clusters
-
-### Testing 
-
-test1 = fast_closest_pair([alg_cluster.Cluster(set([]), 0.02, 0.39, 1, 0), alg_cluster.Cluster(set([]), 0.19, 0.75, 1, 0), alg_cluster.Cluster(set([]), 0.35, 0.03, 1, 0), alg_cluster.Cluster(set([]), 0.73, 0.81, 1, 0), alg_cluster.Cluster(set([]), 0.76, 0.88, 1, 0), alg_cluster.Cluster(set([]), 0.78, 0.11, 1, 0)])
-print(test1)

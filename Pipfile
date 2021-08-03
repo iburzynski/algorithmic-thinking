@@ -10,6 +10,7 @@ requests = "*"
 seaborn = "*"
 pandas = "*"
 numpy = "*"
+pillow = "*"
 
 [dev-packages]
 
