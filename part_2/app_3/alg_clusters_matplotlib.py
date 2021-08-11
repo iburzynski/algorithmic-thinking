@@ -1,28 +1,24 @@
-# import project algorithms
-from proj_3 import hierarchical_clustering, kmeans_clustering
+"""
+Code for plotting clusters using matplotlib
+"""
 
-# general imports
 import math
 import urllib
 import matplotlib.pyplot as plt
 from PIL import Image
 
-###################################################
-# Constants and Helper Functions
-
+# URLS for various important datasets
 DIRECTORY = "http://commondatastorage.googleapis.com/codeskulptor-assets/"
-COUNTIES = [111, 290, 896, 3108]
-DATA_SOURCES = {num: f"{DIRECTORY}data_clustering/unifiedCancerData_{num}.csv" 
-                        for num in COUNTIES}
 MAP_URL = DIRECTORY + "data_clustering/USA_Counties.png"
-# Define clustering methods
-CLUSTERING_METHODS = {'hierarchical': hierarchical_clustering,
-                      'k-means': kmeans_clustering}
+
 # Define colors for clusters.  Display a max of 16 clusters.
 COLORS = ['Aqua', 'Yellow', 'Blue', 'Fuchsia', 'Black', 'Green', 'Lime', 
           'Maroon', 'Navy', 'Olive', 'Orange', 'Purple', 'Red', 'Brown', 'Teal']
 
+
+
 # Helper functions
+
 def circle_area(pop):
     """
     Compute area of circle proportional to population
@@ -90,3 +86,4 @@ def plot_clusters(data_table, cluster_list, method, num_counties,
     plt.axis('off')
 
     plt.savefig(f'plots/{method}_clustering_map_{num_counties}.png')
+

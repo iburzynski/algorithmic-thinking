@@ -6,11 +6,15 @@ from clusters import Cluster, Clustering
 import random
 import timeit
 import copy
+import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import seaborn as sns
 
+############################################
+# Functions for answering Questions 1
+############################################
 
 def gen_random_clusters(num_clusters):
     """
@@ -78,6 +82,10 @@ def plot_tests(iterations):
 
     return None
 
+############################################
+# Function for answering Questions 10
+############################################
+
 def plot_distortion(datasets):
     """
     Takes a list of integer values (corresponding to the numbers of counties in 
@@ -131,6 +139,8 @@ def plot_distortion(datasets):
         handles, labels = ax.get_legend_handles_labels()
         ax.legend(handles[::-1], labels[::-1], frameon=False)
         sns.despine()
+        # Save the plot
+        os.makedirs(f'./plots', exist_ok=True)
         plt.savefig(f'plots/distortion_{dataset}.png')
 
 
@@ -160,28 +170,27 @@ def plot_distortion(datasets):
 # Question 5
 ##########################################################
 
-# h_clust_111 = Clustering(num_counties=111, cluster_method='hierarchical', 
-#                          num_clusters=9)
+h_clust_111 = Clustering(num_counties=111, cluster_method='hierarchical', 
+                         num_clusters=9)
 # h_clust_111.run_viz()
 
 ##########################################################
 # Question 6
 ##########################################################
 
-# k_clust_111 = Clustering(num_counties=111, cluster_method='k-means', 
-#                          num_clusters=9)
+k_clust_111 = Clustering(num_counties=111, cluster_method='k-means', 
+                         num_clusters=9)
 # k_clust_111.run_viz()
 
 ##########################################################
 # Question 7
 ##########################################################
 
-# h_distortion = h_clust_111.compute_distortion()
-# k_distortion = k_clust_111.compute_distortion()
-
+h_distortion = h_clust_111.compute_distortion()
+k_distortion = k_clust_111.compute_distortion()
 
 ##########################################################
 # Question 10
 ##########################################################
 
-plot_distortion([111, 290, 896])
+# plot_distortion([111, 290, 896])

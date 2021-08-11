@@ -11,6 +11,7 @@ seaborn = "*"
 pandas = "*"
 numpy = "*"
 pillow = "*"
+scipy = "*"
 
 [dev-packages]
 
