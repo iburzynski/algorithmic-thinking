@@ -1,5 +1,6 @@
 """
-Code for Project 3
+Functions for Project component of Module 3
+Author: Ian Burzynski
 """
 import math
 
@@ -78,31 +79,34 @@ class Cluster:
         horiz_dist = self._horiz_center - other_cluster.horiz_center()
         return math.sqrt(vert_dist ** 2 + horiz_dist ** 2)
         
-    def merge_clusters(self, other_cluster):
+    def merge_clusters(self, other):
         """
         Merges one cluster into another. The merge uses the relative 
         populations of each cluster in computing a new center and risk.
         
         Note: this method mutates self!
         """
-        if len(other_cluster.fips_codes()) == 0:
-        
+        if len(other.fips_codes()) == 0:
             return self
-        
         else:
-            self._fips_codes.update(set(other_cluster.fips_codes()))
- 
-            # compute weights for averaging
-            self_weight = float(self._total_population)                        
-            other_weight = float(other_cluster.total_population())
-            self._total_population = self._total_population + other_cluster.total_population()
-            self_weight /= self._total_population
-            other_weight /= self._total_population
-                    
-            # update center and risk using weights (refactor if possible)
-            self._vert_center = self_weight * self._vert_center + other_weight * other_cluster.vert_center()
-            self._horiz_center = self_weight * self._horiz_center + other_weight * other_cluster.horiz_center()
-            self._averaged_risk = self_weight * self._averaged_risk + other_weight * other_cluster.averaged_risk()
+            self._fips_codes.update(set(other.fips_codes()))
+            # Compute weights for averaging
+            s_weight = float(self._total_population)                        
+            o_weight = float(other.total_population())
+            self._total_population = int(s_weight + o_weight)
+            s_weight /= self._total_population
+            o_weight /= self._total_population     
+            # Update center and risk using weights
+            s_vc = self._vert_center
+            s_hc = self._horiz_center
+            s_ar = self._averaged_risk
+            o_vc = other.vert_center()
+            o_hc = other.horiz_center()
+            o_ar = other.averaged_risk()
+
+            self._vert_center = s_weight * s_vc + o_weight * o_vc
+            self._horiz_center = s_weight * s_hc + o_weight * o_hc
+            self._averaged_risk = s_weight * s_ar + o_weight * o_ar
         
             return self
 
@@ -119,8 +123,7 @@ class Cluster:
         for line_idx in range(len(data_table)):
             line = data_table[line_idx]
             fips_to_line[line[0]] = line_idx
-        
-        # compute error as weighted squared dist from counties to cluster center
+        # Compute error as weighted squared dist from counties to cluster center
         total_error = 0
         counties = self.fips_codes()
         for county in counties:
@@ -138,24 +141,24 @@ class Cluster:
 
 def pair_distance(cluster_list, idx1, idx2):
     """
-    Helper function that computes Euclidean distance between two clusters in a list
-
-    Input: cluster_list is list of clusters, idx1 and idx2 are integer indices for two clusters
-    
+    Helper function that computes Euclidean distance between two clusters in a 
+    list.
+    Input: cluster_list is list of clusters, idx1 and idx2 are integer indices 
+    for two clusters.
     Output: tuple (dist, idx1, idx2) where dist is distance between
-    cluster_list[idx1] and cluster_list[idx2]
+    cluster_list[idx1] and cluster_list[idx2].
     """
-    return (cluster_list[idx1].distance(cluster_list[idx2]), min(idx1, idx2), max(idx1, idx2))
+    return (cluster_list[idx1].distance(cluster_list[idx2]), min(idx1, idx2), 
+                                        max(idx1, idx2))
 
 
 def slow_closest_pair(clusters):
     """
-    Compute the distance between the closest pair of clusters in a list (slow)
-
-    Input: cluster_list is the list of clusters
-    
-    Output: tuple of the form (dist, idx1, idx2) where the centers of the clusters
-    cluster_list[idx1] and cluster_list[idx2] have minimum distance dist.       
+    Compute the distance between the closest pair of clusters in a list (slow).
+    Input: cluster_list is the list of clusters.
+    Output: tuple of the form (dist, idx1, idx2) where the centers of the 
+    clusters cluster_list[idx1] and cluster_list[idx2] have minimum distance 
+    dist.       
     """
     (min_dist, point1, point2) = (float('inf'), -1, -1)
     # check distances between all possible pairs to identify closest
@@ -171,89 +174,82 @@ def slow_closest_pair(clusters):
 def closest_pair_strip(clusters, h_center, half_w):
     """
     Helper function to compute the closest pair of clusters in a vertical strip
-    
     Input: cluster_list is a list of clusters produced by fast_closest_pair
     horiz_center is the horizontal position of the strip's vertical center line
-    half_width is the half the width of the strip (i.e; the maximum horizontal distance
-    that a cluster can lie from the center line)
-
-    Output: tuple of the form (dist, idx1, idx2) where the centers of the clusters
-    cluster_list[idx1] and cluster_list[idx2] lie in the strip and have minimum distance dist.       
+    half_width is the half the width of the strip (i.e; the maximum horizontal 
+    distance that a cluster can lie from the center line)
+    Output: tuple of the form (dist, idx1, idx2) where the centers of the 
+    clusters cluster_list[idx1] and cluster_list[idx2] lie in the strip and have 
+    minimum distance dist.       
     """
-    # initialize default return values
-    (min_dist, point1, point2) = (float('inf'), -1, -1)
+    def in_strip(cluster):
+        """
+        Helper function that takes a cluster as input and returns a boolean 
+        value indicating whether its x val is within half_w distance of the 
+        center line.
+        """
+        return abs(cluster.horiz_center() - h_center) < half_w
 
-    # list indices of clusters with x vals within half_w distance of center line  
-    strip = [idx for idx, clstr in enumerate(clusters) if (abs(clstr.horiz_center() - h_center) < half_w)]
-    # sort indices by vertical position (ascending)
+    # Initialize default return values
+    (min_dist, point1, point2) = (float('inf'), -1, -1)
+    # List indices of clusters with x vals within half_w distance of center line  
+    strip = [idx for idx, cluster in enumerate(clusters) if in_strip(cluster)]
+    # Sort indices by vertical position (ascending)
     strip.sort(key = lambda cluster: clusters[cluster].vert_center())
-    # get number of matching clusters to set iteration ranges
+    # Get number of matching clusters to set iteration ranges
     num_clusters = len(strip)
-    
-    # for each cluster in the strip up to the second-to-last...
-    for idx_u in range(0, num_clusters - 1):
-        # check its pairwise distance with the next strip clusters (maximum 3)
-        for idx_v in range(idx_u + 1, min(idx_u + 3, num_clusters - 1) + 1):
-            dist, idx1, idx2 = pair_distance(clusters, strip[idx_u], strip[idx_v])
-            # update return variables if distance is less than current minimum
-            if dist < min_dist:
-                (min_dist, point1, point2) = (dist, idx1, idx2)
+    # For each cluster in the strip up to the second-to-last...
+    for ix_u in range(0, num_clusters - 1):
+        # Check its pairwise distance with the next strip clusters (maximum 3)
+        for ix_v in range(ix_u + 1, min(ix_u + 3, num_clusters - 1) + 1):
+            dst, idx1, idx2 = pair_distance(clusters, strip[ix_u], strip[ix_v])
+            # Update return variables if distance is less than current minimum
+            if dst < min_dist:
+                (min_dist, point1, point2) = (dst, idx1, idx2)
 
     return min_dist, point1, point2
 
 def fast_closest_pair(clusters):
     """
     Compute the distance between the closest pair of clusters in a list (fast)
-
-    Input: cluster_list is list of clusters SORTED such that horizontal positions of their
-    centers are in ascending order
-    
-    Output: tuple of the form (dist, idx1, idx2) where the centers of the clusters
-    cluster_list[idx1] and cluster_list[idx2] have minimum distance dist.       
+    Input: cluster_list is list of clusters SORTED such that horizontal 
+    positions of their centers are in ascending order.    
+    Output: tuple of the form (dist, idx1, idx2) where the centers of the 
+    clusters cluster_list[idx1] and cluster_list[idx2] have minimum distance 
+    dist.       
     """
     num_clusters = len(clusters)
+
     if num_clusters <= 3:
         return slow_closest_pair(clusters)
-    
     else:
-        # split cluster list in half
+        # Split the cluster list in half
         mid = num_clusters // 2
         l_side = clusters[0:mid]
         r_side = clusters[mid:]
-        # find closest pair on left side
+        # Find the closest pair on the left side
         l_pair = fast_closest_pair(l_side)
-        # find closest pair on right side
-        #py3 (min_dist_r, *r_points) = fast_closest_pair(r_side)
+        # Find the closest pair on the right side
         (min_dist_r, r_point1, r_point2) = fast_closest_pair(r_side) #py2
-        # add midpoint index to right points to restore their original indices
-        #py3 for point in r_points:
-        #py3    point += mid
-        r_point1 += mid #py2
-        r_point2 += mid #py2
-        # set return values with the closest pair from both sides
-        #py3 (min_dist, *points) = min(l_pair, (min_dist_r, *r_points))
-        (min_dist, point1, point2) = min(l_pair, (min_dist_r, r_point1, r_point2)) #py2
-        # calculate location of the center line
+        # Add midpoint index to right points to restore their original indices
+        r_point1 += mid
+        r_point2 += mid
+        # Set return values with the closest pair from both sides
+        min_dist, point1, point2 = min(l_pair, (min_dist_r, r_point1, r_point2)) 
+        # Calculate the location of the center line
         strip = (clusters[mid-1].horiz_center() + clusters[mid].horiz_center())
         c_line = strip / 2
-        # get closest pair within the center strip
+        # Get closest pair within the center strip
         s_pair = closest_pair_strip(clusters, c_line, min_dist)
-        # return the closest pair from all three subsets
-        #py3 return min((min_dist, *points), s_pair)
-        return min((min_dist, point1, point2), s_pair) #py2
-
-############################################################
-# Code to create sequential clustering
-# Create alphabetical clusters for county data
+        # Return the closest pair from all three subsets
+        return min((min_dist, point1, point2), s_pair)
 
 def sequential_clustering(singleton_list, num_clusters, **kwargs):
     """
-    Take a data table and create a list of clusters
-    by partitioning the table into clusters based on its ordering
-    
-    Note that method may return num_clusters or num_clusters + 1 final clusters
+    Take a data table and create a list of clusters by partitioning the table 
+    into clusters based on its ordering
+    Note that method may return num_clusters or num_clusters + 1 final clusters.
     """
-    
     cluster_list = []
     cluster_idx = 0
     total_clusters = len(singleton_list)
@@ -269,18 +265,12 @@ def sequential_clustering(singleton_list, num_clusters, **kwargs):
             
     return cluster_list
 
-
-######################################################################
-# Code for hierarchical clustering
-
-
 def hierarchical_clustering(clusters, num_clusters, **kwargs):
     """
-    Compute a hierarchical clustering of a set of clusters
-    Note: the function may mutate cluster_list
-    
-    Input: List of clusters, integer number of clusters
-    Output: List of clusters whose length is num_clusters
+    Compute a hierarchical clustering of a set of clusters.
+    Note: the function may mutate cluster_list.
+    Input: List of clusters, integer number of clusters.
+    Output: List of clusters whose length is num_clusters.
     """
     while len(clusters) > num_clusters:
         clusters.sort(key = lambda cluster: cluster.horiz_center())
@@ -290,28 +280,24 @@ def hierarchical_clustering(clusters, num_clusters, **kwargs):
 
     return clusters
 
-
-######################################################################
-# Code for k-means clustering
-
 def kmeans_clustering(clusters, num_clusters, num_iterations=5):
     """
     Computes the k-means clustering of a set of clusters, returning a list of 
     clusters of length num_clusters.
     """
-    # position initial centers at locations of clusters with largest populations
+    # Position initial centers at locations of clusters with largest populations
     sort_key = lambda cluster: cluster.total_population()
-    old_clusters = sorted(clusters, key=sort_key, reverse=True)[:num_clusters]
+    old = sorted(clusters, key=sort_key, reverse=True)[:num_clusters]
 
-    for _dummy_i in range(num_iterations):
-        # initialize a set of k (num_clusters) empty clusters
-        new_clusters = [Cluster(set(), 0, 0, 0, 0) for _cl in range(num_clusters)]
+    for _idx in range(num_iterations):
+        # Initialize a set of k (num_clusters) empty clusters
+        new = [Cluster(set(), 0, 0, 0, 0) for _cluster in range(num_clusters)]
         for cls in clusters:
-            # compute distances between the current cluster and each center 
-            dists = [(cls.distance(cent), ix_f) for ix_f, cent in enumerate(old_clusters)]
-            # identify the closest center and merge the current cluster with it
+            # Compute distances between the current cluster and each center
+            dists = [(cls.distance(cent), idx) for idx, cent in enumerate(old)]
+            # Identify the closest center and merge the current cluster with it
             _dist, closest = min(dists)
-            new_clusters[closest].merge_clusters(cls)
-        old_clusters = new_clusters
+            new[closest].merge_clusters(cls)
+        old = new
 
-    return new_clusters
+    return new

@@ -1,14 +1,14 @@
 """
 Classes for creating and visualizing clusters of county-based cancer risk data 
 and associated helper code.
+Author: Ian Burzynski
 """
-# import helper code
+# Import helper code and cluster class
 from helpers import CLUSTERING_METHODS, DATA_SOURCES, plot_clusters
 from proj_3 import Cluster
 
-# general imports
+# General imports
 import requests
-
 
 class Clustering:
     """

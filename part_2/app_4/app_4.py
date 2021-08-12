@@ -1,5 +1,6 @@
 """
 Code for Application component of Module 4
+Author: Ian Burzynski
 """
 
 # Import helper functions, constants and project functions
@@ -69,6 +70,28 @@ def question_2():
     return h_corr, f_corr
 
 h_corr, f_corr = question_2()
+
+##########################################################
+# Question 3
+##########################################################
+
+def question_3():
+    """
+    """
+    *_seqs, scoring = helpers.load_hf_data()
+    a_len = len(scoring) - 1
+    _score, h_align, f_align = question_1(mute=True)
+    match_chars = 0
+    for idx, _char in enumerate(h_align):
+        if h_align[idx] == f_align[idx]:
+            match_chars += 1
+    print(f"Alphabet Length: {a_len}")
+    print(f"Alignment Length: {len(h_align)}")
+    print(f"Matching Characters: {match_chars}")
+    print(f"Match Percentage: {match_chars / len(h_align) * 100:.1f}")
+    print(f"Estimated Odds by Chance: {1 / (a_len ** match_chars)}\n")
+
+question_3()
 
 ##########################################################
 # Question 4
