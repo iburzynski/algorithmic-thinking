@@ -1,5 +1,5 @@
 """
-Constants for Application #2
+Constants for Application component of Module 2
 """
 # Sample graphs for testing proj_2 functions
 GRAPH0 = {0: set([1]),

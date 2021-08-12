@@ -1,5 +1,5 @@
 """
-Code for Application portion of Module 1
+Code for Application component of Module 1
 """
 # import URL for generating citation graph
 from constants_1 import CITATION_URL

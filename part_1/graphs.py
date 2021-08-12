@@ -1,25 +1,23 @@
 """
-Graph objects for Applications #1 & 2
+Graph classes for Application component of Modules 1 & 2
 """
 
 # import helper and project functions
 from helpers import DPATrial, UPATrial, copy_graph, delete_node
-from proj_1 import compute_in_degrees, in_degree_distribution, make_complete_graph
+from proj_1 import in_degree_distribution, make_complete_graph
 from proj_2 import compute_resilience, compute_resilience_bfs
 
 # general imports
-import random
-import math
-import requests
-import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
+import os
+import pandas as pd
+import random
+import requests
 import seaborn as sns
 
-# Parent class for all graphs
 class Graph():
     """
-    Parent class of DataGraph, ERGraph and DPAGraph.
+    Generic graph class. Parent of DataGraph, ERGraph and DPAGraph.
     """
     def __init__(self, directed=True):
         """
@@ -38,6 +36,9 @@ class Graph():
         return self._graph
 
     def get_nodes(self):
+        """
+        Helper method for retrieving the number of nodes in the graph.
+        """
         return self._num_nodes
 
     def get_edges(self):
@@ -49,9 +50,13 @@ class Graph():
         total_edges = sum(graph_edges.values())
         if not self._directed:
             total_edges = total_edges // 2
+
         return total_edges
 
     def is_directed(self):
+        """
+        Returns whether the graph is directed or undirected
+        """
         return self._directed
 
     def get_raw_dist(self):
@@ -64,25 +69,30 @@ class Graph():
         """
         Creates normalized distribution from the graph's raw distribution.
         """
-        return {deg: count / self._num_nodes for deg, count in self.get_raw_dist().items()}
+        r_dist = self.get_raw_dist().items()
+        n_dist = {deg: count / self._num_nodes for deg, count in r_dist}
+        return n_dist
 
-    def plot_dist(self, file_name, plot_title, variables=["Degree", "Probability"]):
+    def plot_dist(self, file_name, title, variables=["Degree", "Probability"]):
         """
         Creates a normalized distribution and plots it as a log-log plot.
         Generates a .png image.
         """
-        sns.set()
-        data = pd.DataFrame(self.normalize_dist().items(), 
-                            columns=variables)
-        sns_plot = sns.regplot(x=variables[0], y=variables[1], 
-                            data=data,
-                            scatter_kws={'alpha':0.33},
-                            fit_reg=False)
-        sns_plot.set(xscale="log", yscale="log", 
-                    title=plot_title)
+        sns.set_style("ticks")
+        data = pd.DataFrame(self.normalize_dist().items(), columns=variables)
+        # Reformat variables (replace underscores with spaces)
+        x_var, y_var = variables
+        sns_plot = sns.regplot(x=x_var, y=y_var, data=data,
+                               scatter_kws={'alpha':0.33}, fit_reg=False)
+        sns_plot.set(xscale="log", yscale="log", title=title)
+        plt.xlabel(x_var.replace('_', ' '))
+        plt.ylabel(y_var.replace('_', ' '))
+        sns.despine()
+        os.makedirs(f'./plots', exist_ok=True)
         plt.savefig(f"plots/{file_name}.png")
-        # Clear figure.
+        # Clear figure
         plt.clf()
+
         return None
 
     def random_order(self):
@@ -92,6 +102,7 @@ class Graph():
         """
         attack_list = list(self.get_graph().keys())
         random.shuffle(attack_list)
+
         return attack_list
 
     def targeted_order(self):
@@ -110,6 +121,7 @@ class Graph():
                     max_degree_node = node
             delete_node(new_graph, max_degree_node)
             order.append(max_degree_node)
+
         return order
 
     def fast_targeted_order(self):
@@ -133,6 +145,7 @@ class Graph():
                     degree_sets[nb_degree - 1].add(neighbor)
                 attack_list.append(target)
                 delete_node(graph, target)
+
         return attack_list
 
     def attack(self, targeted=False, algorithm="uf"):
@@ -204,6 +217,9 @@ class CitationGraph(DataGraph):
 
 
 class ERGraph(Graph):
+    """
+    Subclass for generating graphs using the ER algorithm.
+    """
     def __init__(self, num_nodes, probability, directed=True):
         """
         Takes a number of nodes and probability and generates a random graph
@@ -239,7 +255,8 @@ class ERGraph(Graph):
         Generates the ER distribution plot as a .png file.
         """
         file_name = f"er_plot_{self.get_nodes()}"
-        title = f"Log/Log Distribution of ER Graph (n={self.get_nodes()}, p={self.get_prob()})"
+        title = "Log/Log Distribution of ER Graph"
+        title += f" (n={self.get_nodes()}, p={self.get_prob()})"
         super().plot_dist(file_name, title)
 
         return None

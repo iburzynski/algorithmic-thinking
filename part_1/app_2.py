@@ -1,27 +1,28 @@
 """
 Code for Application portion of Module 2
 """
-# import URL for generating computer network graph
+
+# Import constants, graph classes, and helper functions
 from constants_2 import NETWORK_URL
-# import graph classes
 from graphs import DataGraph, ERGraph, PAGraph
-# import helper functions
 from helpers import compute_neighbors, compute_probability
 
-# general imports
-import time
+# General imports
 import math
-import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
-from matplotlib.patches import Patch, Rectangle
-import seaborn as sns
+import numpy as np
+import os
+import pandas as pd
+import time
+from matplotlib.patches import Rectangle
 
 ############################################
 # Functions for answering Questions 1 - 5
 ############################################
 
 def plot_resilience(graphs, targeted=False, attack_size=0.2):
+    """
+    """
     # Simulate attacks and store resilience lists in dataframe
     data = pd.DataFrame()
     for graph in graphs:
@@ -38,20 +39,24 @@ def plot_resilience(graphs, targeted=False, attack_size=0.2):
     axes = plt.gca()
     axes.spines['top'].set_visible(False)
     axes.spines['right'].set_visible(False)
-    attack_line, nodes_remaining = attack_size * data.count()[0], (1 - attack_size) * data.count()[0]
+    attack_line = attack_size * data.count()[0]
+    nodes_remaining = (1 - attack_size) * data.count()[0]
     resilience_threshold = .75 * nodes_remaining
     plt.axvline(x=attack_line, color="red", alpha=0.2, linestyle=":")
     plt.axhline(y=resilience_threshold, color="red", alpha=0.2, linestyle=":")
-    resilience_patch = Rectangle((0, 0), attack_line, resilience_threshold, color="red", alpha=0.1, label="Resilience threshold")
+    resilience_patch = Rectangle((0, 0), attack_line, resilience_threshold, 
+                                         color="red", alpha=0.1, 
+                                         label="Resilience threshold")
     axes.add_patch(resilience_patch)
     handles, labels = axes.get_legend_handles_labels()
     plt.xlabel("Number of Nodes Removed")
     plt.ylabel("Size of Largest Connected Component")
-    plt.legend(handles=handles, labels=["Computer Network", f"ER Graph (p={uer_p})", 
-                                        f"UPA Graph (m={upa_m})", "< Resilience threshold"])
-    # plt.legend(["Computer Network", f"ER Graph (p={uer_p})", 
-    #            f"UPA Graph (m={upa_m})"])
-    #plt.legend(handles=[red_patch])
+    plt.legend(handles=handles, labels=["Computer Network", 
+                                        f"ER Graph (p={uer_p})", 
+                                        f"UPA Graph (m={upa_m})", 
+                                        "< Resilience threshold"])
+
+    os.makedirs(f'./plots', exist_ok=True)
     plt.savefig(f"plots/resilience_{attack_type.lower()}.png")
 
     return data
@@ -68,6 +73,8 @@ def is_resilient(data, attack_size=0.2, resilience_threshold=0.25):
     return answers
 
 def time_test(num_neighbors=5, runs=10):
+    """
+    """
     def test_targeted(graph, fast=False):
         """
         Runs a single test on a graph using targeted_order. Returns time value.
@@ -82,8 +89,12 @@ def time_test(num_neighbors=5, runs=10):
         return to_time
     
     def test_series(graph, fast=False, runs=10):
+        """
+        Runs a series of tests on a graph using targeted_order. Returns the 
+        average test time.
+        """
         time_list = []
-        for run in range(runs):
+        for _run in range(runs):
             time_list.append(test_targeted(graph, fast=fast))
 
         return np.mean(time_list)
@@ -115,6 +126,8 @@ def time_test(num_neighbors=5, runs=10):
     axes.spines['right'].set_visible(False)
     plt.xlabel(f"Size (n) of UPA Graph (m = {num_neighbors})")
     plt.ylabel("Running Time (Seconds)")
+
+    os.makedirs(f'./plots', exist_ok=True)
     plt.savefig(f"plots/targeted_comparison_{runs}.png")
     
     return time_test
