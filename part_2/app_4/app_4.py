@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import seaborn as sns
+from math import factorial
 
 ##########################################################
 # Question 1
@@ -78,18 +79,43 @@ h_corr, f_corr = question_2()
 def question_3():
     """
     """
+    def binomial_prob(trials, successes, num_outcomes):
+        """
+        Helper function to compute the binomial probability of a given number of
+        successes out of a given number of trials, given a range of outcomes of 
+        size num_outcomes.
+        """
+        # Compute value of binomial coefficient (n choose k)
+        perms = factorial(trials)
+        b_coef = perms / (factorial(successes) * factorial(trials - successes))
+
+        p_success = 1 / a_len
+        p_fail = (num_outcomes - 1) / num_outcomes
+        failures = trials - successes
+
+        return b_coef * (p_success ** successes) * (p_fail ** failures)
+
     *_seqs, scoring = helpers.load_hf_data()
     a_len = len(scoring) - 1
     _score, h_align, f_align = question_1(mute=True)
-    match_chars = 0
+    seq_len = len(h_align)
+    matches = 0
     for idx, _char in enumerate(h_align):
         if h_align[idx] == f_align[idx]:
-            match_chars += 1
+            matches += 1
+
     print(f"Alphabet Length: {a_len}")
-    print(f"Alignment Length: {len(h_align)}")
-    print(f"Matching Characters: {match_chars}")
-    print(f"Match Percentage: {match_chars / len(h_align) * 100:.1f}")
-    print(f"Estimated Odds by Chance: {1 / (a_len ** match_chars)}\n")
+    print(f"Alignment Length: {seq_len}")
+    print(f"Matching Characters: {matches}")
+    print(f"Match Percentage: {matches / seq_len * 100:.1f}")
+    
+    # Compute the probability of matches being >= the alignment's matches
+    match_range = range(matches, seq_len + 1)
+    p_total = sum([binomial_prob(seq_len, num, a_len) for num in match_range])
+    
+    print(f"Probability of {matches} or more matches: {p_total:.1g}\n")
+
+    return p_total
 
 question_3()
 
